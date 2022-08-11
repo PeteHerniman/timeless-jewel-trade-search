@@ -1,5 +1,4 @@
 import copy
-import json
 import webbrowser
 
 import requests
@@ -113,26 +112,25 @@ class Model:
     def set_jewel_selected(self, jewel_selected):
         """
         Sets the currently selected jewel
-        :param jewel_selected:
-        :return:
+        :param jewel_selected: The selected jewel
         """
         self._jewel_selected = jewel_selected
 
     def get_timeless_stats_json(self):
         """
         Gets the timeless stats json for the currently selected jewel
-        :return:
+        :return: The timeless stats json
         """
         return self.TIMELESS_STATS[self._jewel_selected]
 
-    def search(self, search_for_first_name, search_for_second_name, search_for_third_name, seeds):
+    def search(self, poe_session_id, search_for_first_name, search_for_second_name, search_for_third_name, seeds):
         """
         Opens a search on in the browser for timeless jewels with the desired names and seeds
-        :param search_for_first_name:
-        :param search_for_second_name:
-        :param search_for_third_name:
-        :param seeds:
-        :return:
+        :param poe_session_id: The PoE session ID
+        :param search_for_first_name: Whether to search for jewels with the first name
+        :param search_for_second_name: Whether to search for jewels with the second name
+        :param search_for_third_name: Whether to search for jewels with the third name
+        :param seeds: The seeds to search for
         """
         # Validate inputs
         if not self._jewel_selected:
@@ -152,24 +150,28 @@ class Model:
             search_filters.extend(self.create_search_filters(2, seeds))
 
         # Check if the search will be too complex
-        if len(search_filters) > 38:
-            raise ValueError('Too many names/seeds selected. Max value of names*seeds is 38. Current names*seeds=' + str(len(search_filters)) + '.')
+        max_search_filters = 188 if poe_session_id else 38
+        if len(search_filters) > max_search_filters:
+            raise ValueError(f'Too many names/seeds selected. Max value of names*seeds is {max_search_filters}. Current names*seeds={str(len(search_filters))}.')
 
         # Add search filters to query
         query = self.BASE_QUERY.copy()
         query['query']['stats'][0]['filters'] = search_filters
 
         # Run query
-        json_response = requests.post('https://www.pathofexile.com/api/trade/search/Sentinel', json=query, headers=self.HEADERS).json()
+        session = requests.Session()
+        if poe_session_id:
+            session.cookies.update({'POESESSID': poe_session_id})
+        json_response = session.post('https://www.pathofexile.com/api/trade/search/Sentinel', json=query, headers=self.HEADERS).json()
         url = 'https://www.pathofexile.com/trade/search/Sentinel/' + json_response['id']
         webbrowser.open(url, new=2)
 
     def create_search_filters(self, name_id, seeds):
         """
-        Creates a search filter for the given name ID and seed
-        :param name_id:
-        :param seeds:
-        :return:
+        Creates a search filter for the given name ID and seeds
+        :param name_id: The name ID to create the search filter for
+        :param seeds: The seeds to create the search filter for
+        :return: The search filter
         """
         search_filters = []
         for seed in seeds:
@@ -183,8 +185,8 @@ class Model:
     def seeds_validated(self, seeds):
         """
         Validates the seeds
-        :param seeds:
-        :return:
+        :param seeds: The seeds to validate
+        :return: True if valid, False otherwise
         """
         if len(seeds) > 0:
             for seed in seeds:

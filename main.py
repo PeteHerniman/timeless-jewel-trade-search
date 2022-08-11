@@ -10,17 +10,14 @@ class App(tk.Tk):
         super().__init__()
 
         self.title('Timeless Jewel Trade Search')
-        self.resizable(True, False)
-        self.geometry('700x91')
+        self.resizable(False, False)
 
         # Create a model
         model = Model()
 
         # Create a view and place it on the root window
         view = View(self)
-        view.grid(row=0, column=0, padx=10, pady=10)
-        view.columnconfigure(tuple(range(5)), weight=1)
-        view.pack(fill='x')
+        view.pack(fill=tk.BOTH, expand=True)
 
         # Create a controller
         controller = Controller(model, view)
