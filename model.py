@@ -28,7 +28,7 @@ class Model:
         }
     HEADERS = \
         {
-            'User-Agent': 'Timeless Jewel Trade Search 1.0.0'
+            'User-Agent': 'Timeless Jewel Trade Search 1.1.0'
         }
     TIMELESS_STATS = \
         {
