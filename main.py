@@ -9,7 +9,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title('Timeless Jewel Trade Search 1.1.0')
+        self.title('Timeless Jewel Trade Search 1.2.0')
         self.resizable(False, False)
 
         # Create a model

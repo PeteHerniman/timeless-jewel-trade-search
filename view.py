@@ -46,12 +46,14 @@ class View(ttk.Frame):
         self.name_checkbutton3 = ttk.Checkbutton(self.name_frame, text='', variable=self.name_var3, state='disabled')
         self.name_checkbutton3.pack(side=tk.LEFT, padx=5)
 
-        # Seed entry and search button.
+        # Seed entry, league selection and search button.
         self.seeds_frame = ttk.Frame(self)
         self.seeds_frame.pack(fill=tk.X)
         self.seed_var = tk.StringVar()
-        self.seed_entry = ttk.Entry(self.seeds_frame, textvariable=self.seed_var, width=100)
+        self.seed_entry = ttk.Entry(self.seeds_frame, textvariable=self.seed_var, width=80)
         self.seed_entry.pack(side=tk.LEFT, expand=True)
+        self.league_selection_menu = ttk.Combobox(self.seeds_frame, width=20, state='readonly')
+        self.league_selection_menu.pack(side=tk.LEFT)
         self.search_button = ttk.Button(self.seeds_frame, text='Search', command=self.search_button_clicked)
         self.search_button.pack(side=tk.LEFT)
 
@@ -68,6 +70,15 @@ class View(ttk.Frame):
         :param controller: The controller
         """
         self.controller = controller
+        self.controller.update_leagues()
+
+    def set_league_menu_values(self, values):
+        """
+        Set the league selection menu values
+        :param values: The values
+        """
+        self.league_selection_menu['values'] = values
+        self.league_selection_menu.current(0)
 
     def brutal_restraint_button_clicked(self):
         """
@@ -124,7 +135,8 @@ class View(ttk.Frame):
         Handle search button click event
         """
         poe_session_id = self.session_id_entry.get()
-        self.controller.search(poe_session_id, self.name_var1.get(), self.name_var2.get(), self.name_var3.get(), self.seed_var.get())
+        league_id = self.league_selection_menu.get()
+        self.controller.search(poe_session_id, league_id, self.name_var1.get(), self.name_var2.get(), self.name_var3.get(), self.seed_var.get())
 
     def show_error(self, message):
         """

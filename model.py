@@ -28,7 +28,7 @@ class Model:
         }
     HEADERS = \
         {
-            'User-Agent': 'Timeless Jewel Trade Search 1.1.0'
+            'User-Agent': 'Timeless Jewel Trade Search 1.2.0'
         }
     TIMELESS_STATS = \
         {
@@ -123,10 +123,21 @@ class Model:
         """
         return self.TIMELESS_STATS[self._jewel_selected]
 
-    def search(self, poe_session_id, search_for_first_name, search_for_second_name, search_for_third_name, seeds):
+    def get_leagues(self):
+        """
+        Gets the current PC leagues
+        :return: List of PC leagues
+        """
+        leagues_json = requests.get('https://www.pathofexile.com/api/trade/data/leagues', headers=self.HEADERS).json()
+        pc_leagues = filter(lambda league: league['realm'] == 'pc', leagues_json['result'])
+        pc_league_ids = map(lambda league: league['id'], pc_leagues)
+        return list(pc_league_ids)
+
+    def search(self, poe_session_id, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seeds):
         """
         Opens a search on in the browser for timeless jewels with the desired names and seeds
         :param poe_session_id: The PoE session ID
+        :param league_id: The league ID
         :param search_for_first_name: Whether to search for jewels with the first name
         :param search_for_second_name: Whether to search for jewels with the second name
         :param search_for_third_name: Whether to search for jewels with the third name
@@ -162,9 +173,17 @@ class Model:
         session = requests.Session()
         if poe_session_id:
             session.cookies.update({'POESESSID': poe_session_id})
-        json_response = session.post('https://www.pathofexile.com/api/trade/search/Sentinel', json=query, headers=self.HEADERS).json()
-        url = 'https://www.pathofexile.com/trade/search/Sentinel/' + json_response['id']
-        webbrowser.open(url, new=2)
+        json_response = session.post(f'https://www.pathofexile.com/api/trade/search/{league_id}', json=query, headers=self.HEADERS).json()
+        if 'id' in json_response:
+            url = f'https://www.pathofexile.com/trade/search/{league_id}/' + json_response['id']
+            webbrowser.open(url, new=2)
+        elif 'error' in json_response:
+            error = json_response['error']
+            error_code = error['code']
+            error_message = error['message']
+            raise Exception(f'Error {error_code}: {error_message}')
+        else:
+            raise Exception(f'Unknown error: {json_response}')
 
     def create_search_filters(self, name_id, seeds):
         """
