@@ -129,6 +129,14 @@ class Model:
         :return: List of PC leagues
         """
         leagues_json = requests.get('https://www.pathofexile.com/api/trade/data/leagues', headers=self.HEADERS).json()
+        if 'result' not in leagues_json:
+            if 'error' in leagues_json:
+                error = leagues_json['error']
+                error_code = error['code']
+                error_message = error['message']
+                raise Exception(f'Error {error_code}: {error_message}')
+            else:
+                raise Exception(f'Unknown error: {leagues_json}')
         pc_leagues = filter(lambda league: league['realm'] == 'pc', leagues_json['result'])
         pc_league_ids = map(lambda league: league['id'], pc_leagues)
         return list(pc_league_ids)

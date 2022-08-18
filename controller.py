@@ -7,9 +7,15 @@ class Controller:
         """
         Updates the league selection menu with the leagues from the model
         """
-        leagues = self.model.get_leagues()
-        if leagues:
-            self.view.set_league_menu_values(leagues)
+        try:
+            leagues = self.model.get_leagues()
+            if leagues:
+                self.view.set_league_menu_values(leagues)
+            else:
+                raise Exception('No leagues found')
+        except Exception as error:
+            error_message = 'Error updating leagues: ' + str(error)
+            self.view.show_error(error_message)
 
     def select_jewel(self, jewel_selected):
         """
@@ -34,6 +40,7 @@ class Controller:
         :param seed: The seed entry value
         :return: None
         """
+        self.view.show_error('')
         try:
             self.model.search(poe_session_id, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seed.split(','))
         except Exception as error:
