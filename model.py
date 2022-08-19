@@ -5,6 +5,12 @@ import requests
 
 
 class Model:
+    REALM_TO_URL_MAP = \
+        {
+            'pc': '',
+            'xbox': 'xbox/',
+            'sony': 'sony/'
+        }
     BASE_QUERY = \
         {
             "query": {
@@ -108,6 +114,7 @@ class Model:
 
     def __init__(self):
         self._jewel_selected = None
+        self._leagues = {}
 
     def set_jewel_selected(self, jewel_selected):
         """
@@ -123,11 +130,11 @@ class Model:
         """
         return self.TIMELESS_STATS[self._jewel_selected]
 
-    def get_leagues(self):
+    def update_leagues(self):
         """
-        Gets the current PC leagues
-        :return: List of PC leagues
+        Updates the dictionary of leagues
         """
+        # Get the leagues
         leagues_json = requests.get('https://www.pathofexile.com/api/trade/data/leagues', headers=self.HEADERS).json()
         if 'result' not in leagues_json:
             if 'error' in leagues_json:
@@ -137,14 +144,29 @@ class Model:
                 raise Exception(f'Error {error_code}: {error_message}')
             else:
                 raise Exception(f'Unknown error: {leagues_json}')
-        pc_leagues = filter(lambda league: league['realm'] == 'pc', leagues_json['result'])
-        pc_league_ids = map(lambda league: league['id'], pc_leagues)
-        return list(pc_league_ids)
+        # Update the internal dictionary of leagues
+        self._leagues = {}
+        for league in leagues_json['result']:
+            realm = league['realm']
+            if realm not in self._leagues:
+                self._leagues.update({realm: []})
+            self._leagues[realm].append(league['id'])
 
-    def search(self, poe_session_id, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seeds):
+    def get_leagues(self, realm):
+        """
+        Gets the current leagues for a given realm
+        :param realm: The realm to get the leagues for
+        :return: List of leagues for the given realm
+        """
+        if not self._leagues:
+            self.update_leagues()
+        return self._leagues[realm]
+
+    def search(self, poe_session_id, realm, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seeds):
         """
         Opens a search on in the browser for timeless jewels with the desired names and seeds
         :param poe_session_id: The PoE session ID
+        :param realm: The realm to search on
         :param league_id: The league ID
         :param search_for_first_name: Whether to search for jewels with the first name
         :param search_for_second_name: Whether to search for jewels with the second name
@@ -181,9 +203,10 @@ class Model:
         session = requests.Session()
         if poe_session_id:
             session.cookies.update({'POESESSID': poe_session_id})
-        json_response = session.post(f'https://www.pathofexile.com/api/trade/search/{league_id}', json=query, headers=self.HEADERS).json()
+        realm = self.REALM_TO_URL_MAP[realm]
+        json_response = session.post(f'https://www.pathofexile.com/api/trade/search/{realm}{league_id}', json=query, headers=self.HEADERS).json()
         if 'id' in json_response:
-            url = f'https://www.pathofexile.com/trade/search/{league_id}/' + json_response['id']
+            url = f'https://www.pathofexile.com/trade/search/{realm}{league_id}/' + json_response['id']
             webbrowser.open(url, new=2)
         elif 'error' in json_response:
             error = json_response['error']

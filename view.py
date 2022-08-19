@@ -4,6 +4,13 @@ import tkinter as tk
 
 
 class View(ttk.Frame):
+    PLATFORM_NAME_TO_REALM_MAP = \
+        {
+            'PC': 'pc',
+            'Xbox': 'xbox',
+            'PS4': 'sony'
+        }
+
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -52,8 +59,13 @@ class View(ttk.Frame):
         self.seed_var = tk.StringVar()
         self.seed_entry = ttk.Entry(self.seeds_frame, textvariable=self.seed_var, width=80)
         self.seed_entry.pack(side=tk.LEFT, expand=True)
-        self.league_selection_menu = ttk.Combobox(self.seeds_frame, width=20, state='readonly')
-        self.league_selection_menu.pack(side=tk.LEFT)
+        self.platform_selection_combobox = ttk.Combobox(self.seeds_frame, width=5, state='readonly')
+        self.platform_selection_combobox.bind('<<ComboboxSelected>>', self.platform_selected)
+        self.platform_selection_combobox['values'] = list(self.PLATFORM_NAME_TO_REALM_MAP.keys())
+        self.platform_selection_combobox.current(0)
+        self.platform_selection_combobox.pack(side=tk.LEFT)
+        self.league_selection_combobox = ttk.Combobox(self.seeds_frame, width=20, state='readonly')
+        self.league_selection_combobox.pack(side=tk.LEFT)
         self.search_button = ttk.Button(self.seeds_frame, text='Search', command=self.search_button_clicked)
         self.search_button.pack(side=tk.LEFT)
 
@@ -63,22 +75,6 @@ class View(ttk.Frame):
 
         # Set the controller
         self.controller = None
-
-    def set_controller(self, controller):
-        """
-        Set the controller
-        :param controller: The controller
-        """
-        self.controller = controller
-        self.controller.update_leagues()
-
-    def set_league_menu_values(self, values):
-        """
-        Set the league selection menu values
-        :param values: The values
-        """
-        self.league_selection_menu['values'] = values
-        self.league_selection_menu.current(0)
 
     def brutal_restraint_button_clicked(self):
         """
@@ -110,6 +106,30 @@ class View(ttk.Frame):
         """
         self.controller.select_jewel('militant_faith')
 
+    def platform_selected(self, event):
+        """
+        Platform selected
+        :param event: The event object
+        """
+        self.update_leagues()
+
+    def search_button_clicked(self):
+        """
+        Handle search button click event
+        """
+        poe_session_id = self.session_id_entry.get()
+        league_id = self.league_selection_combobox.get()
+        platform_name = self.platform_selection_combobox.get()
+        self.controller.search(poe_session_id, self.PLATFORM_NAME_TO_REALM_MAP[platform_name], league_id, self.name_var1.get(), self.name_var2.get(), self.name_var3.get(), self.seed_var.get())
+
+    def set_controller(self, controller):
+        """
+        Set the controller
+        :param controller: The controller
+        """
+        self.controller = controller
+        self.update_leagues()
+
     def set_name_checkbutton_values(self, values, enabled):
         """
         Updates the name checkbuttons with the given names
@@ -130,13 +150,19 @@ class View(ttk.Frame):
             self.name_var2.set(False)
             self.name_var3.set(False)
 
-    def search_button_clicked(self):
+    def update_leagues(self):
         """
-        Handle search button click event
+        Update the leagues
         """
-        poe_session_id = self.session_id_entry.get()
-        league_id = self.league_selection_menu.get()
-        self.controller.search(poe_session_id, league_id, self.name_var1.get(), self.name_var2.get(), self.name_var3.get(), self.seed_var.get())
+        self.controller.update_leagues(self.PLATFORM_NAME_TO_REALM_MAP.get(self.platform_selection_combobox.get()))
+
+    def set_league_menu_values(self, values):
+        """
+        Set the league selection menu values
+        :param values: The values
+        """
+        self.league_selection_combobox['values'] = values
+        self.league_selection_combobox.current(0)
 
     def show_error(self, message):
         """

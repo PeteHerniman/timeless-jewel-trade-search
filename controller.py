@@ -3,12 +3,13 @@ class Controller:
         self.model = model
         self.view = view
 
-    def update_leagues(self):
+    def update_leagues(self, realm):
         """
         Updates the league selection menu with the leagues from the model
+        :param realm: The realm to search on
         """
         try:
-            leagues = self.model.get_leagues()
+            leagues = self.model.get_leagues(realm)
             if leagues:
                 self.view.set_league_menu_values(leagues)
             else:
@@ -29,10 +30,11 @@ class Controller:
                 stat_names = [timeless_stat['name'] for timeless_stat in timeless_stats]
                 self.view.set_name_checkbutton_values(stat_names, '!disabled')
 
-    def search(self, poe_session_id, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seed):
+    def search(self, poe_session_id, realm, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seed):
         """
         Searches for timeless jewels with the selected names and seed values and opens the results in the browser
         :param poe_session_id: The PoE session id
+        :param realm: The realm to search on
         :param league_id: The league id
         :param search_for_first_name: Whether to search for jewels with the first name
         :param search_for_second_name: Whether to search for jewels with the second name
@@ -42,7 +44,7 @@ class Controller:
         """
         self.view.show_error('')
         try:
-            self.model.search(poe_session_id, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seed.split(','))
+            self.model.search(poe_session_id, realm, league_id, search_for_first_name, search_for_second_name, search_for_third_name, seed.split(','))
         except Exception as error:
             error_message = 'Error searching for timeless jewels: ' + str(error)
             print(error_message)
